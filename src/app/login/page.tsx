@@ -109,7 +109,7 @@ export default function LoginPage() {
           />
 
           <div className="flex w-full justify-end mt-2">
-            <Link href="#">
+            <Link href="/esqueci-senha">
               <p className="text-sm text-muted-foreground hover:underline">
                 Esqueceu a senha?
               </p>
