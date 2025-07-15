@@ -12,9 +12,10 @@ interface Contato {
 
 interface Props {
   contatos: Contato[];
+  selected?: Contato | null;
 }
 
-export function MapClient({ contatos }: Props) {
+export function MapClient({ contatos, selected }: Props) {
   const mapRef = useRef<HTMLDivElement>(null);
   const mapInstance = useRef<google.maps.Map | null>(null);
   const markersRef = useRef<google.maps.Marker[]>([]);
@@ -26,7 +27,7 @@ export function MapClient({ contatos }: Props) {
     });
 
     loader.load().then(() => {
-      console.log('Google Maps API carregada ✅'); // ← Adicione esse log
+      console.log('Google Maps API carregada ✅');
 
       if (mapRef.current && !mapInstance.current) {
         mapInstance.current = new google.maps.Map(mapRef.current, {
@@ -53,7 +54,7 @@ export function MapClient({ contatos }: Props) {
           contato.name,
           contato.latitude,
           contato.longitude
-        ); // Adicione isso
+        );
 
         const lat = Number(contato.latitude);
         const lng = Number(contato.longitude);
@@ -77,6 +78,25 @@ export function MapClient({ contatos }: Props) {
       mapInstance.current!.fitBounds(bounds);
     }
   }, [contatos]);
+
+  useEffect(() => {
+    if (
+      selected &&
+      selected.latitude &&
+      selected.longitude &&
+      mapInstance.current
+    ) {
+      const lat = Number(selected.latitude);
+      const lng = Number(selected.longitude);
+
+      if (!isNaN(lat) && !isNaN(lng)) {
+        const position = { lat, lng };
+        mapInstance.current.panTo(position);
+        mapInstance.current.setZoom(15);
+        console.log('Centralizando no contato selecionado:', selected.name);
+      }
+    }
+  }, [selected]);
 
   return <div ref={mapRef} className="flex-1" />;
 }

@@ -10,7 +10,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Card } from '@/components/ui/card';
-import { MapClient } from '@/components/dashboard/mapaClient'; // <- novo componente
+import { MapClient } from '@/components/dashboard/mapaClient';
 import { EditContactDialog } from '@/components/contacts/EditContactDialog';
 import { DeleteContactDialog } from '@/components/contacts/DeleteContactDialog';
 
@@ -30,24 +30,7 @@ export default function ContatosPage() {
   const [contatos, setContatos] = useState<Contato[]>([]);
   const [search, setSearch] = useState('');
   const [tipoContrato, setTipoContrato] = useState<string>('todos');
-
-  useEffect(() => {
-    fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/contacts`, {
-      headers: {
-        Authorization: `Bearer ${localStorage.getItem('token')}`,
-      },
-    })
-      .then((res) => res.json())
-      .then((data) => setContatos(data));
-  }, []);
-
-  const contatosFiltrados = contatos.filter((c) => {
-    const termo = `${c.name} ${c.address || ''}`.toLowerCase();
-    return (
-      termo.includes(search.toLowerCase()) &&
-      (tipoContrato === 'todos' || c.tipo_contrato === tipoContrato)
-    );
-  });
+  const [selectedContact, setSelectedContact] = useState<Contato | null>(null); // 👈 novo
 
   const fetchContacts = () => {
     fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/contacts`, {
@@ -62,6 +45,14 @@ export default function ContatosPage() {
   useEffect(() => {
     fetchContacts();
   }, []);
+
+  const contatosFiltrados = contatos.filter((c) => {
+    const termo = `${c.name} ${c.address || ''}`.toLowerCase();
+    return (
+      termo.includes(search.toLowerCase()) &&
+      (tipoContrato === 'todos' || c.tipo_contrato === tipoContrato)
+    );
+  });
 
   return (
     <div className="flex h-screen">
@@ -88,23 +79,21 @@ export default function ContatosPage() {
         />
 
         {contatosFiltrados.map((contato) => (
-          <Card key={contato.id} className="mb-2 p-4">
+          <Card
+            key={contato.id}
+            className={`mb-2 p-4 cursor-pointer ${
+              selectedContact?.id === contato.id
+                ? 'border-primary bg-muted'
+                : ''
+            }`}
+            onClick={() => setSelectedContact(contato)} // 👈 novo
+          >
             <div className="flex justify-between items-center mb-1">
               <p className="font-semibold text-sm truncate">{contato.name}</p>
               <div className="flex gap-1">
                 <EditContactDialog
                   contato={contato}
-                  onUpdated={() => {
-                    fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/contacts`, {
-                      headers: {
-                        Authorization: `Bearer ${localStorage.getItem(
-                          'token'
-                        )}`,
-                      },
-                    })
-                      .then((res) => res.json())
-                      .then((data) => setContatos(data));
-                  }}
+                  onUpdated={fetchContacts}
                 />
                 <DeleteContactDialog
                   contatoId={contato.id}
@@ -121,8 +110,8 @@ export default function ContatosPage() {
           </Card>
         ))}
       </div>
-
-      <MapClient contatos={contatosFiltrados} />
+      <MapClient contatos={contatosFiltrados} selected={selectedContact} />{' '}
+      {/* 👈 novo */}
     </div>
   );
 }
